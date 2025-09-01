@@ -4,6 +4,67 @@
   padding: 2rem;
   text-align: center;
 }
+/* === FORCE LIGHT MODAL === */
+/* overlay */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 999;
+}
+.modal-card{
+  background:#fff;              /* ขาว */
+  color:#222;
+  width: 720px;
+  max-width: 92vw;
+  border-radius:12px;
+  padding:22px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  animation: fadeIn .18s ease-in;
+}
+.modal-title{
+  margin:0 0 14px;
+  font-size:20px;
+  font-weight:700;
+}
+/* ฟอร์ม */
+.modal-card input,
+.modal-card textarea{
+  width:100%;
+  padding:11px 12px;
+  border:1px solid #d7dbe0;
+  border-radius:8px;
+  background:#fff;
+  color:#222;
+  outline:none;
+}
+.modal-card input:focus,
+.modal-card textarea:focus{ border-color:#b9cd34; box-shadow:0 0 0 3px rgba(255, 0, 0, 0.18) }
+
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mt-10{ margin-top:10px; }
+
+.field-error{ color:#e11d48; display:block; margin-top:6px; font-size:12px; }
+
+.modal-actions{
+  margin-top:16px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+/* ปรับปุ่มหลักให้เด่นบนพื้นขาว */
+.btn--primary{
+  background: linear-gradient(135deg, var(--brand-2), var(--brand));
+  color:#07121e;
+  border:none;
+}
+
+/* fadeIn animation ที่ modal ใช้ */
+@keyframes fadeIn { from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:none} }
 
 .logo {
   height: 6em;
@@ -39,4 +100,87 @@
 
 .read-the-docs {
   color: #888;
+}
+/* กล่อง popup */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55); /* ดำโปร่ง */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* กล่องเนื้อหา modal */
+.modal__content {
+  background: #ffffff;           /* ขาว */
+  color: #333;                   /* ตัวหนังสือเข้ม */
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Header ของ popup */
+.modal__content h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+  color: #222;
+}
+
+/* Input + Textarea */
+.modal__content input,
+.modal__content textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  color: #333;
+}
+
+/* ปุ่ม */
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal__actions .btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal__actions .btn:first-child {
+  background: #007bff;
+  color: #fff;
+  border: none;
+}
+
+.modal__actions .btn:first-child:hover {
+  background: #0056b3;
+}
+
+.modal__actions .btn:last-child {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal__actions .btn:last-child:hover {
+  background: #ddd;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

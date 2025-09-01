@@ -56,7 +56,7 @@ export default function UsersPage() {
     load();
   }
 
-  // client-side sort (แถมให้เบื้องต้น; จะย้ายไป server ก็ได้)
+  // client-side sort
   const [sortKey, setSortKey] = useState<keyof User>("first_name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const sorted = useMemo(() => {
@@ -147,58 +147,118 @@ export default function UsersPage() {
       {showForm && (
         <UserForm
           initial={editing || undefined}
-          onClose={closeForm}
+          onClose={(refresh?: boolean)=>closeForm(refresh)}
         />
       )}
     </main>
   );
 }
 
-/* ---------- Components (inline for brevity) ---------- */
-function UserForm({ initial, onClose }: { initial?: Partial<User>, onClose: (refresh?: boolean)=>void }) {
+/* ---------- Modal Form (white theme) ---------- */
+function UserForm({
+  initial,
+  onClose,
+}: { initial?: Partial<User>, onClose: (refresh?: boolean)=>void }) {
   const [f, setF] = useState<Partial<User>>(initial ?? {});
-  const API = "http://127.0.0.1:8000";
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   function set<K extends keyof User>(k: K, v: User[K]) {
     setF(prev => ({ ...prev, [k]: v }));
   }
+
+  // close with ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !saving) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [saving, onClose]);
+
   async function submit() {
-    const body = {
-      first_name: f.first_name || "",
-      last_name:  f.last_name || "",
-      email:      f.email || "",
-      phone:      f.phone || "",
-      dob:        f.dob || null,
-      address:    f.address || "",
-    };
-    const isEdit = Boolean(f.id);
-    const url = isEdit ? `${API}/users/${f.id}` : `${API}/users`;
-    const method = isEdit ? "PUT" : "POST";
-    const res = await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
-    if (!res.ok) { alert(await res.text()); return; }
-    onClose(true);
+    setErr(null);
+    // basic validate
+    if (!f.first_name?.trim() || !f.last_name?.trim() || !f.email?.trim()) {
+      setErr("First name, Last name, and Email are required.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(f.email)) {
+      setErr("Invalid email format.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const body = {
+        first_name: f.first_name || "",
+        last_name:  f.last_name  || "",
+        email:      f.email      || "",
+        phone:      f.phone      || "",
+        dob:        f.dob || null,
+        address:    f.address    || "",
+      };
+      const isEdit = Boolean(f.id);
+      const url = isEdit ? `${API}/users/${f.id}` : `${API}/users`;
+      const method = isEdit ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error((await res.text()) || "Save failed");
+      onClose(true);
+    } catch (e: any) {
+      setErr(e.message ?? "Save failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
+  // overlay click to close
+  const onOverlay = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && !saving) onClose();
+  };
+
   return (
-    <div className="card" style={{position:"fixed", inset:"10% 20%", zIndex:50}}>
-      <h2 className="card__title">{f.id ? "Edit user" : "Add user"}</h2>
-      <div className="form" style={{gridTemplateColumns:"1fr 1fr"}}>
-        <input className="input" placeholder="First name" value={f.first_name||""} onChange={e=>set("first_name", e.target.value)} />
-        <input className="input" placeholder="Last name"  value={f.last_name||""}  onChange={e=>set("last_name", e.target.value)} />
-        <input className="input" placeholder="Email"      value={f.email||""}      onChange={e=>set("email", e.target.value)} />
-        <input className="input" placeholder="Phone"      value={f.phone||""}      onChange={e=>set("phone", e.target.value)} />
-        <input className="input" placeholder="DOB (YYYY-MM-DD)" value={f.dob||""} onChange={e=>set("dob", e.target.value)} />
-        <input className="input" placeholder="Address"    value={f.address||""}    onChange={e=>set("address", e.target.value)} />
-        <div />
-        <div style={{display:"flex", gap:8, justifyContent:"flex-end"}}>
-          <button className="btn" onClick={()=>onClose(false)}>Cancel</button>
-          <button className="btn btn--primary" onClick={submit}>{f.id ? "Save" : "Create"}</button>
+    <div className="modal" onClick={onOverlay} role="dialog" aria-modal="true">
+      <div className="modal__overlay" />
+      <div className="modal-card" onClick={(e)=>e.stopPropagation()}>
+        <h3 className="modal-title">{f.id ? "Edit user" : "Add user"}</h3>
+
+        <div className="grid-2">
+          <input className="input" placeholder="First name"
+                 value={f.first_name||""} onChange={e=>set("first_name", e.target.value)} />
+          <input className="input" placeholder="Last name"
+                 value={f.last_name||""} onChange={e=>set("last_name", e.target.value)} />
+        </div>
+
+        <div className="grid-2">
+          <input className="input" placeholder="Email"
+                 value={f.email||""} onChange={e=>set("email", e.target.value)} />
+          <input className="input" placeholder="Phone"
+                 value={f.phone||""} onChange={e=>set("phone", e.target.value)} />
+        </div>
+
+        <div className="grid-2">
+          <input className="input" type="date"
+                 value={f.dob||""} onChange={e=>set("dob", e.target.value)} />
+          <input className="input" placeholder="Address"
+                 value={f.address||""} onChange={e=>set("address", e.target.value)} />
+        </div>
+
+        {err && <div className="alert" style={{marginTop:10}}>{err}</div>}
+
+        <div className="modal__actions">
+          <button className="btn btn--ghost" onClick={()=>onClose()} disabled={saving}>Cancel</button>
+          <button className="btn btn--primary" onClick={submit} disabled={saving}>
+            {saving ? "Saving..." : (f.id ? "Save" : "Create")}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+/* ---------- Upload ---------- */
 function UploadBox({ onDone }: { onDone: ()=>void }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<any>(null);
